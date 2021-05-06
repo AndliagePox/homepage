@@ -5,14 +5,13 @@
                  :style="{color: engine.color}">{{ textList[i] }}</div>
         </div>
         <form action="javascript:void(0)" id="input-form" @submit="completeInput">
+            <label for="input"></label>
             <input id="input" v-model="searchText" autocomplete="off"
-                   @focus="focus" @blur="extra = false" @input="input">
+                   @focus="focus" @blur="blur" @input="input">
         </form>
-        <transition name="fade">
-            <div id="extra" v-if="extra">
-                <div class="extra-item" v-for="(t, i) in extraList" :key="i" @click="eiClick(t)">{{ t }}</div>
-            </div>
-        </transition>
+        <div id="extra" v-if="extra">
+            <div class="extra-item" v-for="(t, i) in extraList" :key="i" @click="eiClick(t)">{{ t }}</div>
+        </div>
     </div>
 </template>
 
@@ -36,6 +35,12 @@
 
         created() {
             this.loadHistory()
+
+            // 搜索建议回调函数
+            window.sug = (data) => {
+                this.extraList = data.s
+                this.$forceUpdate()
+            }
         },
 
         methods: {
@@ -50,8 +55,16 @@
             },
 
             focus() {
-                this.loadHistory()
+                this.input()
                 this.extra = true
+            },
+
+            blur() {
+                // 失去焦点extra立即消失的话会点不到(不执行点击函数)，所以需要一点小延时
+                let i = this
+                setTimeout(function () {
+                    i.extra = false
+                }, 100)
             },
 
             eiClick(t) {
@@ -76,7 +89,6 @@
             },
 
             input() {
-                console.log(this.searchText)
                 if (this.searchText === '') {
                     this.loadHistory()
                 } else {
@@ -95,7 +107,8 @@
             },
 
             loadSuggestion() {
-
+                let url = 'http://suggestion.baidu.com/su?wd=' + this.searchText
+                this.$jsonp(url, {cb: "sug"}).catch(function () {})
             },
 
             addHistory(t) {
@@ -163,12 +176,5 @@
 
     .extra-item {
         padding: 4px;
-    }
-
-    .fade-enter-active, .fade-leave-active {
-        transition: opacity .5s;
-    }
-    .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
-        opacity: 0;
     }
 </style>
