@@ -1,7 +1,8 @@
 <template>
     <div id="app">
         <div id="logo">
-            <div v-for="(engine, i) in engines" :key="i" class="logo-text" @click.stop="logoClick"
+            <div v-for="(engine, i) in engines" :key="i" class="logo-text"
+                 @touchstart="logoTouchStart" @touchend="logoTouchEnd" @touchmove="touchMove"
                  :style="{color: engine.color}">{{ textList[i] }}</div>
         </div>
         <form action="javascript:void(0)" id="input-form" @submit="completeInput">
@@ -10,7 +11,10 @@
                    @focus="focus" @input.stop="input" @click.stop="">
         </form>
         <div id="extra" v-if="extra">
-            <div class="extra-item" v-for="(t, i) in extraList" :key="i" @click="eiClick(t)">{{ t }}</div>
+            <div class="extra-item" v-for="(t, i) in extraList" :key="i"
+                 @touchstart.stop="eiTouchStart(t)"
+                 @touchend.stop="eiTouchEnd(t)"
+                 @touchmove="touchMove">{{ t }}</div>
         </div>
     </div>
 </template>
@@ -33,7 +37,13 @@
                 extra: false,
 
                 /* 扩展菜单内容列表(历史记录/搜索推荐) */
-                extraList: []
+                extraList: [],
+
+                /* 长按计时器 */
+                timer: null,
+
+                /* 当前扩展列表显示的是历史记录还搜索建议，true表示历史记录 */
+                hi: true
             }
         },
 
@@ -43,6 +53,7 @@
             // 搜索建议回调函数
             window.sug = (data) => {
                 this.extraList = data.s
+                this.hi = false
                 this.$forceUpdate()
             }
 
@@ -51,6 +62,62 @@
         },
 
         methods: {
+            logoTouchStart() {
+                let i = this
+                this.timer = setTimeout(function () {
+                    if (confirm("清空历史记录？")) {
+                        localStorage.setItem("andliage-hp-history", "[]")
+                        console.log(i.hi)
+                        if (i.hi) {
+                            i.loadHistory()
+                        }
+                    }
+                }, 700)
+            },
+
+            logoTouchEnd() {
+                clearTimeout(this.timer)
+                if (this.timer !== null) {
+                    this.logoClick()
+                }
+                this.timer = null
+            },
+
+            eiTouchStart(t) {
+                let i = this
+                this.timer = setTimeout(function () {
+                    let x = i
+                    if (i.hi && confirm("删除搜索历史：\"" + t + "\"？")) {
+                        let hl = []
+                        let s = localStorage.getItem("andliage-hp-history")
+                        if (s != null && s !== '') {
+                            hl = JSON.parse(s)
+                        }
+                        let i = hl.indexOf(t)
+                        if (i !== -1) {
+                            hl.splice(i,1)
+                        }
+                        localStorage.setItem("andliage-hp-history", JSON.stringify(hl))
+                        // 好家伙，你们前端也太tm神奇了
+                        console.log(x.hi)
+                        x.loadHistory()
+                    }
+                }, 700)
+            },
+
+            eiTouchEnd(t) {
+                clearTimeout(this.timer)
+                if (this.timer !== null) {
+                    this.eiClick(t)
+                }
+                this.timer = null
+            },
+
+            touchMove() {
+                clearTimeout(this.timer)
+                this.timer = null
+            },
+
             logoClick() {
                 let x = this.engines[0]
                 let i = 1
@@ -101,6 +168,7 @@
                 let s = localStorage.getItem("andliage-hp-history")
                 if (s != null && s !== '') {
                     this.extraList = JSON.parse(s)
+                    this.hi = true
                 }
                 this.$forceUpdate()
             },
