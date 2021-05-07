@@ -1,13 +1,13 @@
 <template>
     <div id="app">
         <div id="logo">
-            <div v-for="(engine, i) in engines" :key="i" class="logo-text" @click="logoClick"
+            <div v-for="(engine, i) in engines" :key="i" class="logo-text" @click.stop="logoClick"
                  :style="{color: engine.color}">{{ textList[i] }}</div>
         </div>
         <form action="javascript:void(0)" id="input-form" @submit="completeInput">
             <label for="input"></label>
             <input id="input" v-model="searchText" autocomplete="off"
-                   @focus="focus" @blur="blur" @input="input">
+                   @focus="focus" @input.stop="input" @click.stop="">
         </form>
         <div id="extra" v-if="extra">
             <div class="extra-item" v-for="(t, i) in extraList" :key="i" @click="eiClick(t)">{{ t }}</div>
@@ -28,7 +28,11 @@
                     {color: '#ff3e00', url: 'https://www.google.com/search?q='},
                 ],
                 searchText: '',
+
+                /* 扩展菜单是否显示 */
                 extra: false,
+
+                /* 扩展菜单内容列表(历史记录/搜索推荐) */
                 extraList: []
             }
         },
@@ -41,6 +45,9 @@
                 this.extraList = data.s
                 this.$forceUpdate()
             }
+
+            // 全局点击事件，实现点击空白处隐藏扩展菜单
+            window.addEventListener("click", () => {this.extra = false});
         },
 
         methods: {
@@ -57,14 +64,6 @@
             focus() {
                 this.input()
                 this.extra = true
-            },
-
-            blur() {
-                // 失去焦点extra立即消失的话会点不到(不执行点击函数)，所以需要一点小延时
-                let i = this
-                setTimeout(function () {
-                    i.extra = false
-                }, 100)
             },
 
             eiClick(t) {
@@ -137,6 +136,13 @@
 </script>
 
 <style>
+    #app {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+    }
+
     #logo {
         width: 100%;
         margin: 55% auto 5% auto;
