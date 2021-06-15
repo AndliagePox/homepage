@@ -52,9 +52,13 @@
 
             // 搜索建议回调函数
             window.sug = (data) => {
-                this.extraList = data.s
-                this.hi = false
-                this.$forceUpdate()
+                // 当请求建议的字符串和当前搜索框内容一致时再更新建议列表
+                // 解决网速跟不上手速时导致的列表混乱bug
+                if (data.q === this.searchText) {
+                    this.extraList = data.s
+                    this.hi = false
+                    this.$forceUpdate()
+                }
             }
 
             // 全局点击事件，实现点击空白处隐藏扩展菜单
@@ -196,7 +200,7 @@
             },
 
             isUrl(t) {
-                let r = /^((https?|ftp|news):\/\/)?(([a-z0-9-]*[.])+([a-z]{2}|aero|arpa|biz|com|coop|edu|gov|info|int|jobs|mil|museum|name|nato|net|org|pro|travel)|(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))(\/[a-z0-9_\-.~]+)*(\/([a-z0-9_\-.]*)(\?[a-z0-9+_\-.%=&]*)?)?(#[a-z][a-z0-9_]*)?$/i
+                let r = /^((https?|ftp|news):\/\/)?(([a-z0-9-]*[.])+([a-z0-9]+)|(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))(\/[a-z0-9_\-.~]+)*(\/([a-z0-9_\-.]*)(\?[a-z0-9+_\-.%=&]*)?)?(#[a-z][a-z0-9_]*)?$/i
                 return r.test(t)
             }
         }
